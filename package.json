@@ -1,0 +1,31 @@
+{
+  "name": "freelander2-pdc",
+  "version": "1.0.0",
+  "description": "parking sensor app for freelander 2",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhysmorgan134/freelander2-PDC.git"
+  },
+  "keywords": [
+    "can",
+    "canbus",
+    "parking",
+    "sensors"
+  ],
+  "author": "Rhys Morgan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rhysmorgan134/freelander2-PDC/issues"
+  },
+  "homepage": "https://github.com/rhysmorgan134/freelander2-PDC#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "onoff": "^5.0.1",
+    "pi-temperature": "^2.1.0",
+    "socket.io": "^2.3.0"
+  }
+}

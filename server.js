@@ -1,0 +1,98 @@
+var express = require('express');
+var app=express();
+var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+var can = require('socketcan');
+var fs = require("fs");
+var temp = require("pi-temperature");
+var Gpio = require("onoff").Gpio
+var fan = new Gpio(17, 'out')
+var {exec} = require('child_process');
+//default array to use as the buffer to send can messages when no new changes
+var def = [203, 0, 0, 0, 0, 0, 127, 127]
+var tempCar = {}
+var info = {}
+var fanOn = fan.readSync()
+//message object which is used to send can message
+var msgOut = {
+    'id': 712,
+    'data': def
+
+}
+//console.log("bringing can up res: " + JSON.stringify(exec("sudo /sbin/ip link set can0 up type can bitrate 125000")))
+var brightness = 255
+exec("sudo sh -c 'echo " + '"' + brightness +'"' +" > /sys/class/backlight/rpi_backlight/brightness'")
+
+//create indicator object, this sends the status of all leds over the socket
+var parking = {}
+parking.active = 0
+parking.topRight = 4
+parking.topLeft = 4
+parking.botLeft = 4
+parking.botRight = 4
+
+//create can channel
+var channel = can.createRawChannel("can0", true);
+channel.setRxFilters([{id:392,mask:392}])
+// create listener for all can bus messages
+channel.addListener("onMessage", function(msg) {
+    //check if message id = 520, hex - 0x208, this contains the statuses sent to the panel
+    if(msg.id === 392) {
+        var arr = [...msg.data]
+        if(arr[0] === 999) {
+            parking.active = 1
+            parking.topRight = arr[7]
+            parking.topLeft = arr[8]
+            parking.botLeft = arr[4]
+            parking.botRight = arr[5]
+        } else {
+            parking.active =0
+        }
+    } else if (msg.id === 99999999999) {
+        var arr = [...msg.data]
+        var newBrightness = arr[3]
+        if (newBrightness !== brightness) {
+            brightness = newBrightness        
+//		console.log("new brightness is " + brightness)            
+		if(brightness != 0) {
+		exec("sudo sh -c 'echo " + '"' + brightness +'"' +" > /sys/class/backlight/rpi_backlight/brightness'")
+    }
+        }
+    }
+} );
+
+//can bus channel start
+channel.start()
+
+//server start
+server.listen(3000)
+
+//serve static html
+app.use(express.static(__dirname + '/html'))
+
+//on socket connection
+io.on('connection', function(client) {
+ 
+    console.log('Client connected....');
+
+})
+
+
+setInterval(() => {
+    //create output object for the canbus message
+    var out = {}
+    if(parking.active) {
+        io.emit('parking',parking)
+    }
+}, 100)
+
+setInterval(() => {
+    temp.measure(function(err, temp) {
+        if (err) console.error(err);
+        else {
+            info['cpu'] = temp
+        }
+    });
+
+    io.emit('info', info);
+}, 500)
