@@ -8,17 +8,10 @@ var temp = require("pi-temperature");
 var Gpio = require("onoff").Gpio
 var fan = new Gpio(17, 'out')
 var {exec} = require('child_process');
-//default array to use as the buffer to send can messages when no new changes
-var def = [203, 0, 0, 0, 0, 0, 127, 127]
-var tempCar = {}
 var info = {}
 var fanOn = fan.readSync()
 //message object which is used to send can message
-var msgOut = {
-    'id': 712,
-    'data': def
 
-}
 //console.log("bringing can up res: " + JSON.stringify(exec("sudo /sbin/ip link set can0 up type can bitrate 125000")))
 var brightness = 255
 exec("sudo sh -c 'echo " + '"' + brightness +'"' +" > /sys/class/backlight/rpi_backlight/brightness'")
@@ -36,15 +29,18 @@ var channel = can.createRawChannel("can0", true);
 channel.setRxFilters([{id:392,mask:392}])
 // create listener for all can bus messages
 channel.addListener("onMessage", function(msg) {
+    //console.log(msg)
     //check if message id = 520, hex - 0x208, this contains the statuses sent to the panel
     if(msg.id === 392) {
         var arr = [...msg.data]
-        if(arr[0] === 999) {
+        if(arr[0] > 10) {
+            console.log(arr)
             parking.active = 1
-            parking.topRight = arr[7]
-            parking.topLeft = arr[8]
-            parking.botLeft = arr[4]
-            parking.botRight = arr[5]
+            parking.topRight = getDist(arr[6])
+            parking.topLeft = getDist(arr[7])
+            parking.botLeft = getDist(arr[3])
+            parking.botRight = getDist(arr[4])
+            console.log(JSON.stringify(parking))
         } else {
             parking.active =0
         }
@@ -60,6 +56,26 @@ channel.addListener("onMessage", function(msg) {
         }
     }
 } );
+
+var getDist = function(val) {
+    var dist =4;
+    switch(true) {
+        case (val < 64):
+            dist = 4;
+            break;
+        case(val<128):
+            dist =3;
+            break;
+        case(val<192):
+            dist=2;
+            break;
+        default:
+            dist=1;
+            break;
+    }
+    return dist;
+    
+}
 
 //can bus channel start
 channel.start()
@@ -80,9 +96,13 @@ io.on('connection', function(client) {
 
 setInterval(() => {
     //create output object for the canbus message
-    var out = {}
+    var close = 0;
     if(parking.active) {
         io.emit('parking',parking)
+    } else {
+        io.emit('parking',parking)
+        io.emit('test','parking')
+        console.log("sent Parking")
     }
 }, 100)
 
