@@ -36,6 +36,7 @@ channel.addListener("onMessage", function(msg) {
         if(arr[0] > 10) {
             console.log(arr)
             parking.active = 1
+	//exec("xdotool search --name 'PDC' windowactivate")
             parking.topRight = getDist(arr[6])
             parking.topLeft = getDist(arr[7])
             parking.botLeft = getDist(arr[3])

@@ -1,5 +1,5 @@
 var socket = io.connect('192.168.0.119:3000')
-//const remote = require('electron').remote;
+const remote = require('electron').remote;
 socket.on('parking', (data) => {
     console.log("parking event")
     for (var k in data) {

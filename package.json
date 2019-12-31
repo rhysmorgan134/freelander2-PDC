@@ -1,10 +1,14 @@
 {
   "name": "freelander2-pdc",
+  "author": "Rhys Morgan",
   "version": "1.0.0",
   "description": "parking sensor app for freelander 2",
-  "main": "server.js",
+  "main": "./main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron --no-sandbox .",
+    "dist": "electron-builder",
+    "package": "electron-builder --linux AppImage --armv7l --publish never"
   },
   "repository": {
     "type": "git",
@@ -16,7 +20,6 @@
     "parking",
     "sensors"
   ],
-  "author": "Rhys Morgan",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/rhysmorgan134/freelander2-PDC/issues"
@@ -28,5 +31,10 @@
     "pi-temperature": "^2.1.0",
     "socket.io": "^2.3.0",
     "socketcan": "^2.6.0"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^1.8.8",
+    "electron-builder": "^21.1.5",
+    "electron": "6.1.5"
   }
 }
